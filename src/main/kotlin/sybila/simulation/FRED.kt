@@ -5,9 +5,16 @@ import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
 
-private class BasicREDSimulation(
+class FeedbackREDSimulation(
     params: Params
 ) : Params by params {
+
+    private val mul = 0.25
+    private val discount = 0.9998
+
+    fun nextFeedback(feedback: Double, avrQueue: Double, nextAvrQueue: Double): Double {
+        return (nextAvrQueue - avrQueue) + discount * feedback
+    }
 
     // BASIC
     private fun dropRate(avrQueue: Double): Double = when {
@@ -45,23 +52,30 @@ private class BasicREDSimulation(
         }
     }
 
-    fun nextAvrQueue(avrQueue: Double): Double = (1.0 - weight) * avrQueue + weight * currentQueue(dropRate(avrQueue))
+    fun nextAvrQueue(avrQueue: Double, feedback: Double): Double {
+        return (1.0 - weight) * avrQueue + weight * currentQueue(dropRate(avrQueue)) + mul * feedback
+    }
 
 }
 
-private const val algo = "basic"
+private const val algo = "feedback"
 
-private fun BufferedImage.writeSimulation(x: Int, minY: Double, maxY: Double, simulation: BasicREDSimulation) {
+private fun BufferedImage.writeSimulation(x: Int, minY: Double, maxY: Double, simulation: FeedbackREDSimulation) {
     var avrQueue: Double = simulation.bufferSize / 2.0
+    var feedback = 0.0
 
     // first, stabilise the simulation
     repeat(1_000_000) {
-        avrQueue = simulation.nextAvrQueue(avrQueue)
+        val next = simulation.nextAvrQueue(avrQueue, feedback)
+        feedback = simulation.nextFeedback(feedback, avrQueue, next)
+        //if (it % 1000 == 0) println("Queue: $avrQueue (stable ${next == avrQueue})")
+        avrQueue = next
     }
 
     // then draw
     repeat(1_000) {
-        val next = simulation.nextAvrQueue(avrQueue)
+        val next = simulation.nextAvrQueue(avrQueue, feedback)
+        feedback = simulation.nextFeedback(feedback, avrQueue, next)
         val pixel = (1000.0 * ((next - minY)/maxY)).toInt()
         if (pixel < 0 || pixel >= 1000.0) error("Invalid pixel: $pixel")
         setRGB(x, 1000 - pixel - 1, Color.WHITE.rgb)
@@ -70,12 +84,20 @@ private fun BufferedImage.writeSimulation(x: Int, minY: Double, maxY: Double, si
 }
 
 fun main() {
+    /*val simulation = FeedbackREDSimulation(ParamsData())
+    var avrQueue: Double = simulation.bufferSize / 2.0
+    var feedback = 0.0
+    println("Feedback $feedback; Queue: $avrQueue")
+    repeat(1_000) {
+        val next = simulation.nextAvrQueue(avrQueue, feedback)
+        feedback = simulation.nextFeedback(feedback, avrQueue, next)
+        avrQueue = next
+        println("Feedback $feedback; Queue: $avrQueue")
+    }*/
     simulation("delay", 0.001, 1.0) { ParamsData(delay = it) }
     println("Done delay")
     simulation("packet", 1024.0, 8192.0) { ParamsData(packetSize = it) }
     println("Done packet")
-    simulation("pMax", 0.05, 0.3) { ParamsData(pMax = it) }
-    println("Done pMax")
     simulation("qMax", 500.0, 900.0) { ParamsData(qMax = it) }
     println("Done qMax")
     simulation("qMin", 100.0, 500.0) { ParamsData(qMin = it) }
@@ -92,7 +114,7 @@ private fun simulation(prop: String, min: Double, max: Double, minY: Double = 0.
     for (x in 0 until 1000) {
         if (x % 100 == 0) println("Progress $x/1000")
         val value = min + step * x
-        val simulation = BasicREDSimulation(builder(value))
+        val simulation = FeedbackREDSimulation(builder(value))
         image.writeSimulation(x, minY, maxY, simulation)
     }
 
