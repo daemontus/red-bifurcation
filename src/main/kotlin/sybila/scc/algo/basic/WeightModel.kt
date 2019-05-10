@@ -131,7 +131,7 @@ fun main() {
                 for (pixelY in pixelYLow..pixelYHigh) {
                     p.drawRow(image = image, y = 1000 - pixelY, pixelsX = 1000, min = minX, max = maxX)
                 }
-                //println("State $s:${model.stateInterval(s).asString()} for $p")
+                //println("State $s:${model.queueInterval(s).asString()} for $p")
             }
         }
     }

@@ -40,6 +40,26 @@ operator fun Double.minus(that: Interval): Interval = doubleArrayOf(
     this - that.high, this - that.low
 )
 
+operator fun Double.times(that: Interval): Interval = doubleArrayOf(
+    min(this * that.low, this * that.high), max(this * that.high, this * that.low)
+)
+
+operator fun Double.plus(that: Interval): Interval = doubleArrayOf(
+    this + that.low, this + that.high
+)
+
+fun Interval.boundDown(bound: Double): Interval = when {
+    bound <= low -> this
+    high <= bound -> doubleArrayOf(bound, bound)
+    else -> doubleArrayOf(bound, high)
+}
+
+fun Interval.boundUp(bound: Double): Interval = when {
+    high <= bound -> this
+    bound <= low -> doubleArrayOf(bound, bound)
+    else -> doubleArrayOf(low, bound)
+}
+
 fun Interval.restrict(bounds: Interval): Interval {
     val low = max(this.low, bounds.low)
     val high = min(this.high, bounds.high)
