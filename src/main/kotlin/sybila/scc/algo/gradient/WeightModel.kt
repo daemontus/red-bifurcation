@@ -1,8 +1,10 @@
-package sybila.scc.algo.ared
+package sybila.scc.algo.gradient
+
 
 import sybila.scc.algo.*
 import sybila.simulation.Params
 import sybila.simulation.ParamsData
+import java.awt.Color
 import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
@@ -76,15 +78,22 @@ class WeightModel(
     private fun currentQueue(dropRate: Interval): Interval
             = doubleArrayOf(currentQueue(dropRate.high), currentQueue(dropRate.low))    // reversed because decreasing
 
-    private val alpha = 0.005
-    private val beta = 0.9
+    private val gamma = 0.000002
 
     private fun nextPMax(avrQueue: Interval, pMax: Interval): Interval {
-        return when {
-            qTarget < avrQueue.low -> (alpha + pMax).boundUp(pMaxBounds.high)
-            avrQueue.high < qTarget -> (beta * pMax).boundDown(pMaxBounds.low)
-            else -> doubleArrayOf(pMax.low * beta, pMax.high + alpha)   // inside target!
+        val a = (currentQueue(dropRate(avrQueue, pMax)) - i(qTarget)) * i(gamma)
+        val b = (i(qMax - qMin) / ((avrQueue - i(qMin)) * pMax)).mapNotNull { (low, high) ->
+            if (high < 0.0) null else {
+                doubleArrayOf(kotlin.math.max(0.0, low), high)
+            }
+        }.let { p ->
+            if (p.isEmpty()) doubleArrayOf(pMaxBounds.low, pMaxBounds.low)
+            else if (p.size > 1) error("WTF: $p")
+            else {
+                p.first().boundDown(pMaxBounds.low).boundUp(pMaxBounds.high)
+            }
         }
+        return pMax + a * doubleArrayOf(Math.sqrt(b.low), Math.sqrt(b.high))
     }
 
     init {
@@ -105,7 +114,7 @@ class WeightModel(
                 (queueIntervals[t] intersect maximalNextAvrQueue)?.let { nextAvrQueue ->
                     // nextAvrQueue = (1-w) * currentAvrQueue + w * queue ->
                     // w = (nextAvrQueue - currentAvrQueue) / (queue - currentAvrQueue)
-                    val wList = ((nextAvrQueue - currentAvrQueue) / (queue - currentAvrQueue)).mapNotNull { it.round(6.0).asIParams(weight) }
+                    val wList = ((nextAvrQueue - currentAvrQueue) / (queue - currentAvrQueue)).mapNotNull { it.round(3.0).asIParams(weight) }
                     if (wList.isEmpty()) null else {
                         val w = solver.run { wList.merge { a, b -> a or b } }
                         (pMaxFrom..pMaxTo).map { p ->
@@ -121,8 +130,8 @@ class WeightModel(
 
     private fun Double.findQueue(): Int {
         val find = this
-        if (find <= queueBounds.low) return 0
-        if (find >= queueBounds.high) return states - 1
+        if (find < queueBounds.low) return 0
+        if (find > queueBounds.high) return states - 1
         var l = 0; var r = queueIntervals.size - 1
         while (true) {
             val mid = l + (r - l) / 2
@@ -131,10 +140,10 @@ class WeightModel(
             if (find in queueIntervals[l]) return l
             if (find in queueIntervals[r]) return r
             if (find < midInterval.low) {
-                r = mid - 1
+                r = mid
             }
             if (find > midInterval.high) {
-                l = mid + 1
+                l = mid
             }
             if (l >= r) error("WTF: cannot findQueue $find")
         }
@@ -142,8 +151,8 @@ class WeightModel(
 
     private fun Double.findPMax(): Int {
         val find = this
-        if (find <= pMaxBounds.low) return 0
-        if (find >= pMaxBounds.high) return pMaxThresholds - 1
+        if (find < pMaxBounds.low) return 0
+        if (find > pMaxBounds.high) return pMaxThresholds - 1
         var l = 0; var r = pMaxIntervals.size - 1
         while (true) {
             val mid = l + (r - l) / 2
@@ -152,10 +161,10 @@ class WeightModel(
             if (find in pMaxIntervals[l]) return l
             if (find in pMaxIntervals[r]) return r
             if (find < midInterval.low) {
-                r = mid - 1
+                r = mid
             }
             if (find > midInterval.high) {
-                l = mid + 1
+                l = mid
             }
             if (l >= r) error("WTF: cannot findQueue $find")
         }
@@ -190,5 +199,5 @@ fun main() {
     println("Elapsed: ${System.currentTimeMillis() - start}")
 
     println("Write image...")
-    ImageIO.write(image, "PNG", File("ared.png"))
+    ImageIO.write(image, "PNG", File("gred.png"))
 }

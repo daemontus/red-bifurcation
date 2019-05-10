@@ -32,10 +32,10 @@ class IParams(
         return result
     }
 
-    fun drawRow(image: BufferedImage, y: Int, pixelsX: Int, min: Double, max: Double) {
+    fun drawRow(image: BufferedImage, y: Int, pixelsX: Int, min: Double, max: Double, color: Int = Color.WHITE.rgb) {
         if (thresholds.isEmpty()) {
             if (valid[0]) {
-                for (x in 0 until pixelsX) image.setRGB(x,y, Color.WHITE.rgb)
+                for (x in 0 until pixelsX) image.setRGB(x,y, color)
             }
             return
         }
@@ -47,14 +47,14 @@ class IParams(
             //println("cell end: $cellEnd as $cellEndPixel")
             val valid = valid[cell]
             while (x <= cellEndPixel) {
-                if (valid) image.setRGB(x,y, Color.WHITE.rgb)
+                if (valid) image.setRGB(x,y, color)
                 x += 1
             }
         }
         // handle last cell
         if (valid[thresholds.size]) {
             while (x < pixelsX) {
-                image.setRGB(x,y, Color.WHITE.rgb)
+                image.setRGB(x,y, color)
                 x += 1
             }
         }

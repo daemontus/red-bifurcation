@@ -3,6 +3,7 @@ package sybila.scc.algo.basic
 import sybila.scc.algo.*
 import sybila.simulation.Params
 import sybila.simulation.ParamsData
+import java.awt.Color
 import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
@@ -118,18 +119,18 @@ fun main() {
     val start = System.currentTimeMillis()
     val minX = 0.1
     val maxX = 0.2
-    val maxB = 1000.0
-    val image = BufferedImage(1000, 1000, BufferedImage.TYPE_INT_RGB)
+    val maxB = 900.0
+    val image = BufferedImage(1000, 1500, BufferedImage.TYPE_INT_ARGB)
     val model = WeightModel(weight = doubleArrayOf(minX, maxX), maxB = maxB)
     model.findComponents { component ->
         //println("==== Component ===")
         for (s in 0 until model.stateCount) {
             val p = component.getOrNull(s)
             if (p != null) {
-                val pixelYLow = Math.floor(1000 * model.stateInterval(s).low / maxB).toInt()
-                val pixelYHigh = Math.ceil(1000 * model.stateInterval(s).high / maxB).toInt()
+                val pixelYLow = Math.floor(1500 * model.stateInterval(s).low / maxB).toInt()
+                val pixelYHigh = Math.ceil(1500 * model.stateInterval(s).high / maxB).toInt()
                 for (pixelY in pixelYLow..pixelYHigh) {
-                    p.drawRow(image = image, y = 1000 - pixelY, pixelsX = 1000, min = minX, max = maxX)
+                    p.drawRow(image = image, y = 1500 - pixelY, pixelsX = 1000, min = minX, max = maxX)
                 }
                 //println("State $s:${model.queueInterval(s).asString()} for $p")
             }
@@ -139,5 +140,5 @@ fun main() {
     println("Elapsed: ${System.currentTimeMillis() - start}")
 
     println("Write image...")
-    ImageIO.write(image, "PNG", File("synth_2.png"))
+    ImageIO.write(image, "PNG", File("synth.png"))
 }

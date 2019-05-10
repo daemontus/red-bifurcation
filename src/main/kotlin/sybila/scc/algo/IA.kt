@@ -24,6 +24,8 @@ operator fun Interval.times(that: Interval): Interval = doubleArrayOf(
     max(this.low * that.low, this.low * that.high, this.high * that.low, this.high * that.high)
 )
 
+fun i(value: Double) = doubleArrayOf(value,value)
+
 fun Interval.round(places: Double): Interval {
     val precision = Math.pow(10.0, places)
     return doubleArrayOf(low.roundDown(precision), high.roundUp(precision))

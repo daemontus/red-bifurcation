@@ -6,6 +6,7 @@ import java.io.File
 import java.lang.Double.max
 import java.lang.Double.min
 import javax.imageio.ImageIO
+import kotlin.random.Random
 
 private class AdaptiveREDSimulation(
     params: Params
@@ -63,30 +64,35 @@ private class AdaptiveREDSimulation(
 private const val algo = "adaptive"
 
 private fun BufferedImage.writeSimulation(x: Int, minY: Double, maxY: Double, simulation: AdaptiveREDSimulation) {
-    var avrQueue: Double = simulation.bufferSize / 2.0
-    var pMax = 0.1
+    val rand = Random(x)
+    repeat(100) {
+        var avrQueue: Double = simulation.bufferSize * rand.nextDouble(0.1, 0.9)
+        var pMax = 0.5 * rand.nextDouble(0.1, 0.9)
 
-    // first, stabilise the simulation
-    repeat(1_000_000) {
-        val next = simulation.nextAvrQueue(avrQueue, pMax)
-        if (it % 10 == 0) pMax = simulation.nextPMax(avrQueue, pMax)
-        //if (it % 1000 == 0) println("Queue: $avrQueue (stable ${next == avrQueue})")
-        avrQueue = next
-    }
+        // first, stabilise the simulation
+        repeat(100_000) {
+            val next = simulation.nextAvrQueue(avrQueue, pMax)
+            if (it % 10 == 0)
+                pMax = simulation.nextPMax(avrQueue, pMax)
+            //if (it % 1000 == 0) println("Queue: $avrQueue (stable ${next == avrQueue})")
+            avrQueue = next
+        }
 
-    // then draw
-    repeat(1_000) {
-        val next = simulation.nextAvrQueue(avrQueue, pMax)
-        if (it % 10 == 0) pMax = simulation.nextPMax(avrQueue, pMax)
-        val pixel = (1000.0 * ((next - minY)/maxY)).toInt()
-        if (pixel < 0 || pixel >= 1000.0) error("Invalid pixel: $pixel")
-        setRGB(x, 1000 - pixel - 1, Color.WHITE.rgb)
-        avrQueue = next
+        // then draw
+        repeat(1_000) {
+            val next = simulation.nextAvrQueue(avrQueue, pMax)
+            if (it % 10 == 0)
+                pMax = simulation.nextPMax(avrQueue, pMax)
+            val pixel = (1000.0 * ((next - minY) / maxY)).toInt()
+            if (pixel < 0 || pixel >= 1000.0) error("Invalid pixel: $pixel")
+            setRGB(x, 1000 - pixel - 1, Color.WHITE.rgb)
+            avrQueue = next
+        }
     }
 }
 
 fun main() {
-    simulation("delay", 0.001, 1.0) { ParamsData(delay = it) }
+    /*simulation("delay", 0.001, 1.0) { ParamsData(delay = it) }
     println("Done delay")
     simulation("packet", 1024.0, 8192.0) { ParamsData(packetSize = it) }
     println("Done packet")
@@ -95,13 +101,13 @@ fun main() {
     simulation("qMin", 100.0, 500.0) { ParamsData(qMin = it) }
     println("Done qMin")
     simulation("connections", 200.0, 300.0) { ParamsData(connections = it) }
-    println("Done connections")
-    simulation("weight", 0.1, 0.5, maxY = 2000.0) { ParamsData(weight = it) }
+    println("Done connections")*/
+    simulation("weight", 0.1, 0.2, maxY = 700.0, minY = 100.0) { ParamsData(weight = it) }
     println("Done weight")
 }
 
 private fun simulation(prop: String, min: Double, max: Double, minY: Double = 0.0, maxY: Double = 1500.0, builder: (Double) -> Params) {
-    val image = BufferedImage(1000, 1000, BufferedImage.TYPE_INT_RGB)
+    val image = BufferedImage(1000, 1000, BufferedImage.TYPE_INT_ARGB)
     val step = (max - min) / 1000
     for (x in 0 until 1000) {
         if (x % 100 == 0) println("Progress $x/1000")
