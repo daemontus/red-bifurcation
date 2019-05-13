@@ -83,12 +83,12 @@ fun main() {
     simulation("qMax", 500.0, 900.0) { ParamsData(qMax = it) }
     println("Done qMax")
     simulation("qMin", 100.0, 500.0) { ParamsData(qMin = it) }
-    println("Done qMin")
-    simulation("connections", 200.0, 300.0) { ParamsData(connections = it) }
-    println("Done connections")*/
+    println("Done qMin")*/
+    simulation("connections", 100.0, 300.0) { ParamsData(connections = it) }
+    println("Done connections")
     val start = System.currentTimeMillis()
-    simulation("weight", 0.1, 0.2, minY = 100.0, maxY = 700.0) { ParamsData(weight = it) }
-    println("Done weight")
+    //simulation("weight", 0.1, 0.2, minY = 100.0, maxY = 700.0) { ParamsData(weight = it) }
+    //println("Done weight")
     println("Elapsed: ${System.currentTimeMillis() - start}")
 }
 

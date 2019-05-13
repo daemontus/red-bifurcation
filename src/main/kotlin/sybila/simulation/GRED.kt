@@ -16,7 +16,7 @@ private class GradientREDSimulation(
     fun nextPMax(avrQueue: Double, pMax: Double): Double {
         val a = (currentQueue(dropRate(avrQueue, pMax)) - qTarget) * gamma
         val b = max((qMax - qMin) / ((avrQueue - qMin) * pMax), 0.0)
-        return (pMax + a * Math.sqrt(b)/*(avrQueue - qMin)/(Math.sqrt(dropRate(avrQueue, pMax))) */)//.coerceIn(0.01, 0.5)
+        return (pMax + a * Math.sqrt(b)/*(avrQueue - qMin)/(Math.sqrt(dropRate(avrQueue, pMax))) */).coerceIn(0.01, 0.5)
     }
 
     // BASIC
@@ -97,11 +97,11 @@ fun main() {
     simulation("qMax", 500.0, 900.0) { ParamsData(qMax = it) }
     println("Done qMax")
     simulation("qMin", 100.0, 500.0) { ParamsData(qMin = it) }
-    println("Done qMin")
+    println("Done qMin")*/
     simulation("connections", 200.0, 300.0) { ParamsData(connections = it) }
-    println("Done connections")*/
-    simulation("weight", 0.1, 0.2, maxY = 1800.0) { ParamsData(weight = it) }
-    println("Done weight")
+    println("Done connections")
+    //simulation("weight", 0.1, 0.2, maxY = 1800.0) { ParamsData(weight = it) }
+    //println("Done weight")
 }
 
 private fun simulation(prop: String, min: Double, max: Double, minY: Double = 0.0, maxY: Double = 1500.0, builder: (Double) -> Params) {

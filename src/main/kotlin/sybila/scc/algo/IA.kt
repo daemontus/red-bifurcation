@@ -65,7 +65,7 @@ fun Interval.boundUp(bound: Double): Interval = when {
 fun Interval.restrict(bounds: Interval): Interval {
     val low = max(this.low, bounds.low)
     val high = min(this.high, bounds.high)
-    if (low >= high) error("$this not within $bounds")
+    if (low >= high) error("${Arrays.toString(this)} not within ${Arrays.toString(bounds)}")
     return doubleArrayOf(low, high)
 }
 
@@ -73,7 +73,7 @@ fun Interval.inverse(): List<Interval> {
     val x1 = this.low; val x2 = this.high
     return if (x1 == 0.0 && x2 == 0.0) {
         // Division by pure zero, we are screwed
-        listOf(doubleArrayOf(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY))
+        listOf(doubleArrayOf(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY))
     } else if (x1 == 0.0) {
         // 0.0 .... x2
         listOf(doubleArrayOf(1.0/x2, Double.POSITIVE_INFINITY))
